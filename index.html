@@ -41,6 +41,7 @@
         Next block: E<br/>
       </div>
     </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="module">
 import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
 import {PointerLockControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/PointerLockControls.js';
@@ -52,6 +53,8 @@ var mouseCubeChoices = [];
 var mouseCubeCurrentChoice = 0;
 var mouseCube;
 var newMouseCube;
+
+var MAP;
 
 
 let raycaster;
@@ -68,8 +71,11 @@ const direction = new THREE.Vector3();
 const vertex = new THREE.Vector3();
 const color = new THREE.Color();
 
-init();
-animate();
+$.getJSON('http://127.0.0.1:5000/', function (data) {
+  MAP = data;
+  init();
+  animate();
+})
 
 function init() {
   camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 1, 1000 );
@@ -374,23 +380,14 @@ function addCubes() {
     new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
   ]);
 
-  var materials = mouseCubeChoices[0];
-
-  var cube = new THREE.Mesh(geometry, materials);
-  scene.add(cube);
-  objects.push(cube);
-  cube = new THREE.Mesh(geometry, materials);
-  scene.add(cube);
-  objects.push(cube);
-  cube.position.set(0, 1, 0);
-  cube = new THREE.Mesh(geometry, materials);
-  scene.add(cube);
-  objects.push(cube);
-  cube.position.set(0, 2, 0);
-  cube = new THREE.Mesh(geometry, materials);
-  scene.add(cube);
-  objects.push(cube);
-  cube.position.set(0, 3, 0);
+  MAP.forEach(cube_data => {
+    var materials = mouseCubeChoices[cube_data[3]];
+    var cube = new THREE.Mesh(geometry, materials);
+    cube.position.set(cube_data[0], cube_data[1], cube_data[2]);
+    scene.add(cube);
+    objects.push(cube);
+    console.log(cube)
+  })
 
 
   newMouseCube = function() {
@@ -407,47 +404,6 @@ function addCubes() {
     scene.add(mouseCube);
   }
   newMouseCube();
-
-  function addleaf(x, y, z) {
-    cube = new THREE.Mesh(geometry, mouseCubeChoices[1]);
-    cube.position.set(x, y, z);
-    scene.add(cube);
-    objects.push(cube);
-  }
-
-  addleaf(0, 4, 0);
-  addleaf(0, 5, 0);
-  addleaf(0, 6, 0);
-
-  addleaf(1, 4, 0);
-  addleaf(-1, 4, 0);
-  addleaf(1, 4, 1);
-  addleaf(-1, 4, -1);
-  addleaf(-1, 4, 1);
-  addleaf(1, 4, -1);
-  addleaf(0, 4, 1);
-  addleaf(0, 4, -1);
-
-  addleaf(1, 5, 0);
-  addleaf(-1, 5, 0);
-  addleaf(1, 5, 1);
-  addleaf(-1, 5, -1);
-  addleaf(-1, 5, 1);
-  addleaf(1, 5, -1);
-  addleaf(0, 5, 1);
-  addleaf(0, 5, -1);
-
-  materials = mouseCubeChoices[2];
-
-  var size = 10;
-  for (var i = -size; i <= size;i++) {
-    for (var j = -size; j <= size;j++) {
-      cube = new THREE.Mesh(geometry, materials);
-      cube.position.set(i, 0, j);
-      scene.add(cube);
-      objects.push(cube);
-    }
-  }
 }
 
     </script>
