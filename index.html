@@ -45,6 +45,8 @@ import {PointerLockControls} from 'https://threejsfundamentals.org/threejs/resou
 let camera, scene, renderer, controls;
 
 const objects = [];
+var mouseCube;
+
 
 let raycaster;
 
@@ -169,6 +171,24 @@ function init() {
   renderer.setSize( window.innerWidth, window.innerHeight );
   document.body.appendChild( renderer.domElement );
   window.addEventListener( 'resize', onWindowResize, false );
+  document.addEventListener( 'mousemove', onDocumentMouseMove, false );
+
+
+  var raycaster2 = new THREE.Raycaster();
+  var mouse = new THREE.Vector2();
+
+  function onDocumentMouseMove( event ) {
+      mouse.x = 0; 
+      mouse.y = 0;
+
+      raycaster2.setFromCamera( mouse, camera ); 
+      var intersects = raycaster2.intersectObjects( objects );
+      if (intersects.length > 0) {
+        mouseCube.position.x = intersects[0].point.x
+        mouseCube.position.y = intersects[0].point.y
+        mouseCube.position.z = intersects[0].point.z
+      }
+  }
 
 }
 
@@ -185,6 +205,13 @@ function animate() {
   const time = performance.now();
 
   if ( controls.isLocked === true ) {
+
+    var raycaster2 = new THREE.Raycaster();
+    raycaster2.setFromCamera({
+      x: 0.5,
+      y: 0.5,
+    }, camera);
+    var intersections2 = raycaster.intersectObjects(objects);
 
     raycaster.ray.origin.copy( controls.getObject().position );
 
@@ -278,6 +305,9 @@ function addCubes() {
   scene.add(cube);
   objects.push(cube);
   cube.position.set(0, 3, 0);
+
+  mouseCube = new THREE.Mesh(geometry, materials);
+  scene.add(mouseCube);
 
   function addleaf(x, y, z) {
     cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
