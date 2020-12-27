@@ -204,6 +204,9 @@ function init() {
           return item !== intersects2[0].object
       });
     } else {
+      mouseCube.materials.forEach(mat => {
+        mat.transparent = false;
+      })
       scene.add(mouseCube);
       objects.push(mouseCube);
       newMouseCube(); 
@@ -336,7 +339,12 @@ function addCubes() {
       new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
       new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
     ];
+    materials.forEach(mat => {
+      mat.transparent = true;
+      mat.opacity = 0.5;
+    })
     mouseCube = new THREE.Mesh(geometry, materials);
+    mouseCube.materials = materials;
     scene.add(mouseCube);
   }
   newMouseCube();
