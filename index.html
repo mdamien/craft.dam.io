@@ -6,7 +6,9 @@
   </head>
   <body>
     <canvas id="c"></canvas>
-    <script type="module">import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
+    <script type="module">
+    import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
+  import {FirstPersonControls} from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/examples/jsm/controls/FirstPersonControls.js';
 
 function main() {
   const canvas = document.querySelector('#c');
@@ -17,16 +19,21 @@ function main() {
   const near = 0.1;
   const far = 100;
   const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-  camera.position.z = 5;
+  camera.position.z = 10;
+  camera.position.y = 10;
+
+  const controls = new FirstPersonControls( camera, renderer.domElement );
+  controls.movementSpeed = 1;
+  controls.lookSpeed = 2;
 
   const scene = new THREE.Scene();
+  scene.background = new THREE.Color('white');
 
   const boxWidth = 1;
   const boxHeight = 1;
   const boxDepth = 1;
   const geometry = new THREE.BoxBufferGeometry(boxWidth, boxHeight, boxDepth);
 
-  const cubes = [];  // just an array we can use to rotate the cubes
   const loader = new THREE.TextureLoader();
 
   function loader_load(url){
@@ -36,23 +43,79 @@ function main() {
     return text;
   }
 
-  const materials = [
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
-    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/diamond_ore.png')}),
+  var materials = [
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak_top.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak_top.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
   ];
-  const cube = new THREE.Mesh(geometry, materials);
+
+  var cube = new THREE.Mesh(geometry, materials);
   scene.add(cube);
-  cubes.push(cube);  // add to our list of cubes to rotate
+  cube = new THREE.Mesh(geometry, materials);
+  scene.add(cube);
+  cube.position.set(0, 1, 0);
+  cube = new THREE.Mesh(geometry, materials);
+  scene.add(cube);
+  cube.position.set(0, 2, 0);
+  cube = new THREE.Mesh(geometry, materials);
+  scene.add(cube);
+  cube.position.set(0, 3, 0);
 
-  const cube2 = new THREE.Mesh(geometry, materials);
-  scene.add(cube2);
-  cubes.push(cube2);  // add to our list of cubes to rotate
-  cube2.position.set(3, 0, 0);
+  function addleaf(x, y, z) {
+    cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
+      map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/leaves_oak.png'),
+      alphaTest: 0.5,
+      transparent: true,
+      side: THREE.DoubleSide,
+    }));
+    scene.add(cube);
+    cube.position.set(x, y, z);
+  }
 
+  addleaf(0, 4, 0);
+  addleaf(0, 5, 0);
+  addleaf(0, 6, 0);
+
+  addleaf(1, 4, 0);
+  addleaf(-1, 4, 0);
+  addleaf(1, 4, 1);
+  addleaf(-1, 4, -1);
+  addleaf(-1, 4, 1);
+  addleaf(1, 4, -1);
+  addleaf(0, 4, 1);
+  addleaf(0, 4, -1);
+
+  addleaf(1, 5, 0);
+  addleaf(-1, 5, 0);
+  addleaf(1, 5, 1);
+  addleaf(-1, 5, -1);
+  addleaf(-1, 5, 1);
+  addleaf(1, 5, -1);
+  addleaf(0, 5, 1);
+  addleaf(0, 5, -1);
+
+
+
+  materials = [
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_top.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_top.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
+    new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
+  ];
+
+  var size = 10;
+  for (var i = -size; i <= size;i++) {
+    for (var j = -size; j <= size;j++) {
+      cube = new THREE.Mesh(geometry, materials);
+      scene.add(cube);
+      cube.position.set(i, 0, j);
+    }
+  }
   function resizeRendererToDisplaySize(renderer) {
     const canvas = renderer.domElement;
     const width = canvas.clientWidth;
@@ -64,6 +127,8 @@ function main() {
     return needResize;
   }
 
+  const clock = new THREE.Clock();
+
   function render(time) {
     time *= 0.001;
 
@@ -73,13 +138,7 @@ function main() {
       camera.updateProjectionMatrix();
     }
 
-    cubes.forEach((cube, ndx) => {
-      const speed = .2 + ndx * .1;
-      const rot = time * speed;
-      cube.rotation.x = rot;
-      cube.rotation.y = rot;
-    });
-
+    controls.update(clock.getDelta());
     renderer.render(scene, camera);
 
     requestAnimationFrame(render);
