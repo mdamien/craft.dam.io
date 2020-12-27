@@ -44,8 +44,9 @@ import {PointerLockControls} from 'https://threejsfundamentals.org/threejs/resou
 
 let camera, scene, renderer, controls;
 
-const objects = [];
+var objects = [];
 var mouseCube;
+var newMouseCube;
 
 
 let raycaster;
@@ -173,21 +174,40 @@ function init() {
   window.addEventListener( 'resize', onWindowResize, false );
   document.addEventListener( 'mousemove', onDocumentMouseMove, false );
 
+  document.addEventListener( 'mousedown', onDocumentMouseDown, false );
+
 
   var raycaster2 = new THREE.Raycaster();
   var mouse = new THREE.Vector2();
+  var intersects2;
 
   function onDocumentMouseMove( event ) {
       mouse.x = 0; 
       mouse.y = 0;
 
       raycaster2.setFromCamera( mouse, camera ); 
-      var intersects = raycaster2.intersectObjects( objects );
-      if (intersects.length > 0) {
-        mouseCube.position.x = intersects[0].point.x
-        mouseCube.position.y = intersects[0].point.y
-        mouseCube.position.z = intersects[0].point.z
+      intersects2 = raycaster2.intersectObjects( objects );
+      if (intersects2.length > 0) {
+        mouseCube.position.x = intersects2[0].object.position.x + intersects2[0].face.normal.x;
+        mouseCube.position.y = intersects2[0].object.position.y + intersects2[0].face.normal.y;
+        mouseCube.position.z = intersects2[0].object.position.z + intersects2[0].face.normal.z;
+
       }
+  }
+
+  function onDocumentMouseDown( event ) {
+    var rightclick = event.which == 3;
+
+    if (rightclick) {
+      scene.remove(intersects2[0].object);
+      objects = objects.filter(function(item) {
+          return item !== intersects2[0].object
+      });
+    } else {
+      scene.add(mouseCube);
+      objects.push(mouseCube);
+      newMouseCube(); 
+    }
   }
 
 }
@@ -306,8 +326,20 @@ function addCubes() {
   objects.push(cube);
   cube.position.set(0, 3, 0);
 
-  mouseCube = new THREE.Mesh(geometry, materials);
-  scene.add(mouseCube);
+
+  newMouseCube = function() {
+    var materials = [
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak_top.png')}),
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak_top.png')}),
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+      new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/log_oak.png')}),
+    ];
+    mouseCube = new THREE.Mesh(geometry, materials);
+    scene.add(mouseCube);
+  }
+  newMouseCube();
 
   function addleaf(x, y, z) {
     cube = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
