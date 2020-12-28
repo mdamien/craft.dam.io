@@ -228,13 +228,32 @@ function init() {
         objects = objects.filter(function(item) {
             return item !== intersects2[0].object
         });
+        MAP = MAP.filter(function(item) {
+            return (
+              item[0] !== intersects2[0].object.position.x ||
+              item[1] !== intersects2[0].object.position.y ||
+              item[2] !== intersects2[0].object.position.z
+            )
+        });
+        $.post('http://127.0.0.1:5000/', {
+          data: JSON.stringify(MAP)
+        });
       } else {
         mouseCube.materials.forEach(mat => {
           mat.transparent = false;
         })
         scene.add(mouseCube);
         objects.push(mouseCube);
-        newMouseCube(); 
+        MAP.push([
+          mouseCube.position.x,
+          mouseCube.position.y,
+          mouseCube.position.z,
+          mouseCubeCurrentChoice,
+        ])
+        $.post('http://127.0.0.1:5000/', {
+          data: JSON.stringify(MAP)
+        });
+        newMouseCube();
       }
     }
   }
@@ -386,7 +405,6 @@ function addCubes() {
     cube.position.set(cube_data[0], cube_data[1], cube_data[2]);
     scene.add(cube);
     objects.push(cube);
-    console.log(cube)
   })
 
 
