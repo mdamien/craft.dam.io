@@ -55,6 +55,7 @@ var mouseCube;
 var newMouseCube;
 
 var MAP;
+var renderMap;
 
 
 let raycaster;
@@ -236,17 +237,24 @@ function init() {
 
     if (intersects2.length > 0) {
       if (rightclick) {
-        scene.remove(intersects2[0].object);
-        objects = objects.filter(function(item) {
-            return item !== intersects2[0].object
-        });
         MAP = MAP.filter(function(item) {
+            var pos = intersects2[0].object.position;
+            if (intersects2[0].instanceId) {
+                var matrix = new THREE.Matrix4();
+                intersects2[0].object.getMatrixAt(intersects2[0].instanceId, matrix);
+                pos = new THREE.Vector3()
+                var quaternion = new THREE.Quaternion()
+                var scale = new THREE.Vector3()
+                matrix.decompose(pos, quaternion, scale);
+            }
+
             return (
-              item[0] !== intersects2[0].object.position.x ||
-              item[1] !== intersects2[0].object.position.y ||
-              item[2] !== intersects2[0].object.position.z
+              item[0] !== pos.x ||
+              item[1] !== pos.y ||
+              item[2] !== pos.z
             )
         });
+        renderMap();
         $.post(server, {
           data: JSON.stringify(MAP)
         });
@@ -407,30 +415,39 @@ function addCubes() {
     new THREE.MeshBasicMaterial({map: loader_load('paper_cutout_3_71859379/assets/minecraft/textures/blocks/grass_side.png')}),
   ]);
 
-  var mesh = new THREE.InstancedMesh( geometry, mouseCubeChoices[1], MAP.length);
+  renderMap = function () {
+      objects.forEach(function(obj) {
+        scene.remove(obj)
+      });
+      objects = [];
+      var mesh = new THREE.InstancedMesh( geometry, mouseCubeChoices[1], MAP.length);
 
-  mouseCubeChoices.forEach((materials, mat_i) => {
-      var count = 0;
-      MAP.forEach((cube_data) => {
-        if (cube_data[3] == mat_i) {
-            count += 1;
-        }
+      mouseCubeChoices.forEach((materials, mat_i) => {
+          var count = 0;
+          MAP.forEach((cube_data) => {
+            if (cube_data[3] == mat_i) {
+                count += 1;
+            }
+          })
+
+          var mesh = new THREE.InstancedMesh( geometry, materials, count);
+
+          var i = 0;
+          MAP.forEach((cube_data) => {
+            if (cube_data[3] == mat_i) {
+                const matrix = new THREE.Matrix4();
+                matrix.setPosition(cube_data[0], cube_data[1], cube_data[2]);
+                mesh.setMatrixAt( i, matrix );
+                i++;
+            }
+          })
+          objects.push(mesh);
+          scene.add(mesh);
       })
+  }
 
-      var mesh = new THREE.InstancedMesh( geometry, materials, count);
+  renderMap();
 
-      var i = 0;
-      MAP.forEach((cube_data) => {
-        if (cube_data[3] == mat_i) {
-            const matrix = new THREE.Matrix4();
-            matrix.setPosition(cube_data[0], cube_data[1], cube_data[2]);
-            mesh.setMatrixAt( i, matrix );
-            i++;
-        }
-      })
-      objects.push(mesh);
-      scene.add(mesh);
-  })
 
   newMouseCube = function() {
     var materials = mouseCubeChoices[mouseCubeCurrentChoice];
