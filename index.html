@@ -222,7 +222,7 @@ function init() {
       intersects2 = raycaster2.intersectObjects( objects );
       if (intersects2.length > 0) {
         var pos = intersects2[0].object.position;
-        if (intersects2[0].instanceId) {
+        if (intersects2[0].instanceId !== undefined) {
             var matrix = new THREE.Matrix4();
             intersects2[0].object.getMatrixAt(intersects2[0].instanceId, matrix);
             pos = new THREE.Vector3()
@@ -248,7 +248,7 @@ function init() {
       if (rightclick) {
         MAP = MAP.filter(function(item) {
             var pos = intersects2[0].object.position;
-            if (intersects2[0].instanceId) {
+            if (intersects2[0].instanceId != undefined) {
                 var matrix = new THREE.Matrix4();
                 intersects2[0].object.getMatrixAt(intersects2[0].instanceId, matrix);
                 pos = new THREE.Vector3()
