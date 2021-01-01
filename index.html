@@ -6,11 +6,15 @@
   </head>
   <body>
     <style>
+      * {
+        touch-action: none;
+      }
       #blocker {
         position: absolute;
         width: 100%;
         height: 100%;
         background-color: rgba(0,0,0,0.5);
+        z-index: 10;
       }
 
       #instructions {
@@ -28,6 +32,15 @@
 
         cursor: pointer;
       }
+
+      #gui {
+        pointer-events: none;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        position: absolute;      
+      }
     </style>
     <div id="blocker">
       <div id="instructions">
@@ -41,6 +54,7 @@
         Next block: E<br/>
       </div>
     </div>
+    <canvas id="gui" width="100" height="100" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="module">
 import * as THREE from 'https://threejsfundamentals.org/threejs/resources/threejs/r122/build/three.module.js';
@@ -54,9 +68,16 @@ var mouseCubeCurrentChoice = 0;
 var mouseCube;
 var newMouseCube;
 
+var moveTouchCenter = false;
+var moveTouchPosition = false;
+
+var cameraTouchCenter;
+var cameraTouchPosition;
+
 var MAP;
 var renderMap;
 
+const isMobile = true;
 
 let raycaster;
 
@@ -72,7 +93,11 @@ const direction = new THREE.Vector3();
 const vertex = new THREE.Vector3();
 const color = new THREE.Color();
 
-var server = "http://0.0.0.0:5000/";
+var raycaster2 = new THREE.Raycaster();
+var mouse = new THREE.Vector2();
+var intersects2 = [];
+
+var server = "http://" + window.location.hostname + ":5000/";
 
 $.getJSON(server, function (data) {
   MAP = data;
@@ -107,6 +132,8 @@ function init() {
   const blocker = document.getElementById( 'blocker' );
   const instructions = document.getElementById( 'instructions' );
 
+  /*
+
   instructions.addEventListener( 'click', function () {
     controls.lock();
   }, false );
@@ -121,7 +148,9 @@ function init() {
     instructions.style.display = '';
   } );
 
+  */
   scene.add(controls.getObject());
+  blocker.style.display = 'none';
 
   const onKeyDown = function ( event ) {
 
@@ -164,10 +193,6 @@ function init() {
         mouseCubeCurrentChoice = (mouseCubeCurrentChoice + 1) % mouseCubeChoices.length;
         scene.remove(mouseCube);
         newMouseCube();
-
-        mouseCube.position.x = intersects2[0].object.position.x + intersects2[0].face.normal.x;
-        mouseCube.position.y = intersects2[0].object.position.y + intersects2[0].face.normal.y;
-        mouseCube.position.z = intersects2[0].object.position.z + intersects2[0].face.normal.z;
         break
 
       case 'ArrowUp':
@@ -204,42 +229,14 @@ function init() {
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
+
+    gui.width = window.innerWidth;
+    gui.height = window.innerHeight;
   document.body.appendChild( renderer.domElement );
   window.addEventListener( 'resize', onWindowResize, false );
-  document.addEventListener( 'mousemove', onDocumentMouseMove, false );
-  document.addEventListener( 'mousedown', onDocumentMouseDown, false );
-
-
-  var raycaster2 = new THREE.Raycaster();
-  var mouse = new THREE.Vector2();
-  var intersects2 = [];
-
-  function onDocumentMouseMove( event ) {
-      mouse.x = 0; 
-      mouse.y = 0;
-
-      raycaster2.setFromCamera( mouse, camera ); 
-      intersects2 = raycaster2.intersectObjects( objects );
-      if (intersects2.length > 0) {
-        var pos = intersects2[0].object.position;
-        if (intersects2[0].instanceId !== undefined) {
-            var matrix = new THREE.Matrix4();
-            intersects2[0].object.getMatrixAt(intersects2[0].instanceId, matrix);
-            pos = new THREE.Vector3()
-            var quaternion = new THREE.Quaternion()
-            var scale = new THREE.Vector3()
-            matrix.decompose(pos, quaternion, scale);
-        }
-
-        mouseCube.position.x = pos.x + intersects2[0].face.normal.x;
-        mouseCube.position.y = pos.y + intersects2[0].face.normal.y;
-        mouseCube.position.z = pos.z + intersects2[0].face.normal.z;
-      } else {
-        mouseCube.position.x = 1000000;
-        mouseCube.position.y = 1000000;
-        mouseCube.position.z = 1000000;
-      }
-  }
+  document.addEventListener( 'touchstart', onDocumentTouchStart, false );
+  document.addEventListener( 'touchmove', onDocumentTouchMove, false );
+  document.addEventListener( 'touchend', onDocumentTouchEnd, false );
 
   function onDocumentMouseDown( event ) {
     var rightclick = event.which == 3;
@@ -287,13 +284,36 @@ function init() {
     }
   }
 
+  function onDocumentTouchStart(evt) {
+    moveTouchCenter = {
+      x: evt.touches[0].clientX,
+      y: evt.touches[0].clientY,
+    };
+    moveTouchPosition = moveTouchCenter;
+    evt.preventDefault();
+  }
+
+  function onDocumentTouchMove(evt) {
+    moveTouchPosition = {
+      x: evt.touches[0].clientX,
+      y: evt.touches[0].clientY,
+    }
+    evt.preventDefault();
+  }
+
+  function onDocumentTouchEnd(evt) {
+    moveTouchCenter = false;
+    moveTouchPosition = false;
+    evt.preventDefault();
+  }
 }
 
 function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize( window.innerWidth, window.innerHeight );
-
+    gui.width = window.innerWidth + 'px';
+    gui.height = window.innerHeight + 'px';
 }
 
 function animate() {
@@ -302,7 +322,36 @@ function animate() {
 
   const time = performance.now();
 
-  if ( controls.isLocked === true ) {
+  var guiCtx = gui.getContext("2d");
+  guiCtx.clearRect(0, 0, gui.width, gui.height);
+
+  if ( controls.isLocked === true || isMobile ) {
+
+    mouse.x = 0; 
+    mouse.y = 0;
+
+    raycaster2.setFromCamera( mouse, camera ); 
+    intersects2 = raycaster2.intersectObjects( objects );
+    if (intersects2.length > 0) {
+      var pos = intersects2[0].object.position;
+      if (intersects2[0].instanceId !== undefined) {
+          var matrix = new THREE.Matrix4();
+          intersects2[0].object.getMatrixAt(intersects2[0].instanceId, matrix);
+          pos = new THREE.Vector3()
+          var quaternion = new THREE.Quaternion()
+          var scale = new THREE.Vector3()
+          matrix.decompose(pos, quaternion, scale);
+      }
+
+      mouseCube.position.x = pos.x + intersects2[0].face.normal.x;
+      mouseCube.position.y = pos.y + intersects2[0].face.normal.y;
+      mouseCube.position.z = pos.z + intersects2[0].face.normal.z;
+    } else {
+      mouseCube.position.x = 1000000;
+      mouseCube.position.y = 1000000;
+      mouseCube.position.z = 1000000;
+    }
+
     raycaster.ray.origin.copy( controls.getObject().position );
 
     const intersections = raycaster.intersectObjects( objects );
@@ -316,25 +365,45 @@ function animate() {
 
     velocity.y -= 9.8 * 5.0 * delta; // 100.0 = mass
 
-    direction.z = Number( moveForward ) - Number( moveBackward );
-    direction.x = Number( moveRight ) - Number( moveLeft );
+    if (moveTouchCenter !== false) {
+        direction.z = - (moveTouchPosition.y - moveTouchCenter.y);
+        direction.x = moveTouchPosition.x - moveTouchCenter.x;
+    } else {
+        direction.z = Number( moveForward ) - Number( moveBackward );
+        direction.x = Number( moveRight ) - Number( moveLeft );
+    }
     direction.normalize(); // this ensures consistent movements in all directions
 
-    if ( moveForward || moveBackward ) velocity.z -= direction.z * 30.0 * delta;
-    if ( moveLeft || moveRight ) velocity.x -= direction.x * 30.0 * delta;
 
-    if ( onObject === true ) {
+    if (moveTouchCenter.x > gui.width / 2) {
+      var euler = new THREE.Euler( 0, 0, 0, 'YXZ' );
+      euler.setFromQuaternion( camera.quaternion );
+      euler.y -= direction.x * delta;
+      euler.x += direction.z * delta;
 
-      velocity.y = Math.max( 0, velocity.y );
-      controls.getObject().position.y = intersections[0].point.y + 2;
-      canJump = true;
+      var maxPolarAngle = Math.PI;
+      var minPolarAngle = -Math.PI;
 
+      euler.x = Math.max(Math.PI / 2 - maxPolarAngle, Math.min(Math.PI / 2 - minPolarAngle, euler.x ));
+
+      camera.quaternion.setFromEuler( euler );
+    } else {
+
+      velocity.z -= direction.z * 30.0 * delta;
+      velocity.x -= direction.x * 30.0 * delta;
+
+      if ( onObject === true ) {
+
+        velocity.y = Math.max( 0, velocity.y );
+        controls.getObject().position.y = intersections[0].point.y + 2;
+        canJump = true;
+
+      }
+
+      controls.moveRight( - velocity.x * delta );
+      controls.moveForward( - velocity.z * delta );
+      controls.getObject().position.y += ( velocity.y * delta ); // new behavior
     }
-
-    controls.moveRight( - velocity.x * delta );
-    controls.moveForward( - velocity.z * delta );
-
-    controls.getObject().position.y += ( velocity.y * delta ); // new behavior
 
     if ( controls.getObject().position.y < 0 ) {
 
@@ -344,7 +413,28 @@ function animate() {
       canJump = true;
 
     }
+    
+    guiCtx.strokeStyle = '#00000033';
 
+    guiCtx.beginPath();
+    guiCtx.moveTo(0, gui.height/3);
+    guiCtx.lineTo(gui.width, gui.height/3);
+    guiCtx.stroke();
+
+    guiCtx.beginPath();
+    guiCtx.moveTo(gui.width/3, 0);
+    guiCtx.lineTo(gui.width/3, gui.height/3);
+    guiCtx.stroke();
+
+    guiCtx.beginPath();
+    guiCtx.moveTo(gui.width*2/3, 0);
+    guiCtx.lineTo(gui.width*2/3, gui.height/3);
+    guiCtx.stroke();
+
+    guiCtx.beginPath();
+    guiCtx.moveTo(gui.width/2, gui.height/3);
+    guiCtx.lineTo(gui.width/2, gui.height);
+    guiCtx.stroke();
   }
 
   prevTime = time;
