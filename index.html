@@ -324,6 +324,11 @@ function init() {
     };
     moveTouchPosition = moveTouchCenter;
     evt.preventDefault();
+
+    if (moveTouchCenter.y < gui.height / 2) {
+        if ( canJump === true ) velocity.y += 20;
+        canJump = false;
+    }
   }
 
   function onDocumentTouchMove(evt) {
@@ -455,13 +460,18 @@ function animate() {
     guiCtx.stroke();
 
     guiCtx.beginPath();
-    guiCtx.moveTo(gui.width/3, 0);
-    guiCtx.lineTo(gui.width/3, gui.height/3);
+    guiCtx.moveTo(gui.width/4, 0);
+    guiCtx.lineTo(gui.width/4, gui.height/3);
     guiCtx.stroke();
 
     guiCtx.beginPath();
-    guiCtx.moveTo(gui.width*2/3, 0);
-    guiCtx.lineTo(gui.width*2/3, gui.height/3);
+    guiCtx.moveTo(gui.width*2/4, 0);
+    guiCtx.lineTo(gui.width*2/4, gui.height/3);
+    guiCtx.stroke();
+
+    guiCtx.beginPath();
+    guiCtx.moveTo(gui.width*3/4, 0);
+    guiCtx.lineTo(gui.width*3/4, gui.height/3);
     guiCtx.stroke();
 
     guiCtx.beginPath();
